@@ -1,0 +1,1 @@
+# aliyun-opensearch-go-sdk
