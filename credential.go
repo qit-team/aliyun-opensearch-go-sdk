@@ -1,5 +1,13 @@
 package aliyun_opensearch_go_sdk
 
+import (
+	"strings"
+	"net/url"
+	"crypto/hmac"
+	"crypto/sha1"
+	"encoding/base64"
+)
+
 const (
 	Authorization = "Authorization"
 	OsVersion     = "" // todo : to supply
@@ -43,8 +51,46 @@ func NewAliOsCredential(accessKeyId, accessKeySecret, securityToken string) *Ali
 }
 
 // todo supply Signature algorithm
-func (p *AliOsCredential) Signature(method Method, headers map[string]string, resource string) (signature string, err error) {
-	return
+//func (p *AliOsCredential) Signature(method Method, headers map[string]string, resource string) (signature string, err error) {
+func (p *AliOsCredential) Signature(items map[string]interface{}) (signature string, err error) {
+	params := map[string]interface{}{}
+	if _, ok := items["query_params"]; ok {
+		params = items["query_params"].(map[string]interface{})
+	}
+	// 定义加密内容
+	signContent := ""
+	signContent += strings.ToUpper(items["method"].(string)) + "\n"
+	signContent += items["content_md5"].(string) + "\n"
+	signContent += items["content_type"].(string) + "\n"
+	signContent += items["date"].(string) + "\n"
+
+	// 构建专有header内容
+	xHeaders := p.filter(items["opensearch_headers"].(map[string]interface{}))
+	if len(xHeaders) == 0 {
+		panic("CanonicalizedOpenSearchHeaders is empty!")
+	}
+	for k, v := range xHeaders {
+		signContent += strings.ToLower(k) + ":" + v.(string) + "\n"
+	}
+
+	// 构建canonicalizedResource方法
+	resource := url.QueryEscape(items["request_path"].(string))
+	resource = strings.ReplaceAll(resource, "%2F", "/")
+	sortParams := p.filter(params)
+	queryString := p.buildQuery(sortParams)
+	canonicalizedResource := resource
+	if queryString != "" {
+		canonicalizedResource += "?" + queryString
+	}
+	signContent += canonicalizedResource
+
+	// 执行加密
+	key := p.accessKeySecret
+	hash := hmac.New(sha1.New, []byte(key))
+	hash.Write([]byte(signContent))
+	signResult := base64.StdEncoding.EncodeToString(hash.Sum(nil))
+
+	return signResult, nil
 }
 
 func (p *AliOsCredential) SetSecretKey(accessKeySecret string) {
@@ -61,4 +107,31 @@ func (p *AliOsCredential) GetAccessKeySecret() string {
 
 func (p *AliOsCredential) GetSecurityToken() string {
 	return p.securityToken
+}
+
+
+func (p *AliOsCredential)filter(params map[string]interface{}) map[string]interface{} {
+	newParams := map[string]interface{}{}
+
+	if params != nil && len(params) > 0 {
+		for k, v := range params {
+			if k == "Signature" || v == "" || v == nil {
+				continue
+			} else {
+				newParams[k] = v
+			}
+		}
+		util := Util{}
+		return util.KSort(newParams)
+	} else {
+		return newParams
+	}
+}
+
+func (p *AliOsCredential) buildQuery(params map[string]interface{}) string {
+	values := url.Values{}
+	for k, v := range params {
+		values.Add(k, v.(string))
+	}
+	return strings.ReplaceAll(values.Encode(), "+", "%20")
 }
