@@ -37,7 +37,7 @@ func TestSignature(t *testing.T)  {
 	//	}
 	//}
 	items["query_params"] = params
-	service := NewAliOsCredential("LTAI7QovkSXF98X9", "brUXDvj2ZAJNqPmTR8cNmX11qW7rck", "")
+	service := NewAliOsCredential("", "", "")
 	signature, err := service.Signature(items)
 	fmt.Println("err: ", err)
 	fmt.Println("result: ", signature)

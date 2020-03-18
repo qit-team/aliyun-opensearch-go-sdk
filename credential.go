@@ -20,7 +20,7 @@ const (
 )
 
 type Credential interface {
-	Signature(method Method, headers map[string]string, resource string) (signature string, err error)
+	Signature(method string, headers map[string]string, resource string) (signature string, err error)
 	SetSecretKey(accessKeySecret string)
 	GetAccessKeyId() string
 	GetAccessKeySecret() string
@@ -36,11 +36,11 @@ type AliOsCredential struct {
 func NewAliOsCredential(accessKeyId, accessKeySecret, securityToken string) *AliOsCredential {
 
 	if accessKeyId == "" || len(accessKeyId) == 0 {
-		panic(PanicInfoPrefix + "access key id is empty")
+		panic("panic" + "access key id is empty")
 	}
 
 	if accessKeySecret == "" || len(accessKeySecret) == 0 {
-		panic(PanicInfoPrefix + "access key secret is empty")
+		panic("panic" + "access key secret is empty")
 	}
 
 	aliOsCredential := new(AliOsCredential)
