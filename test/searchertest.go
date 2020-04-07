@@ -44,7 +44,7 @@ func main() {
 	}
 
 
-	OpenSearchClient :=  aliyun_opensearch_go_sdk.NewAliOpenSearchClient("http://opensearch-cn-hangzhou.aliyuncs.com", "LTAIF3r7xeqQoujT", "6VKYCZSHNq28wOZCzzATnklfpiXLQY", "", "crm_call_records")
+	OpenSearchClient :=  aliyun_opensearch_go_sdk.NewAliOpenSearchClient("","","","","")
 	OpenSearchClient.SetTable("call_records");
 
 
