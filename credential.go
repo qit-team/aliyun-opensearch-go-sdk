@@ -1,11 +1,12 @@
 package aliyun_opensearch_go_sdk
 
 import (
-	"strings"
-	"net/url"
+	"aliyun-opensearch-go-sdk/util"
 	"crypto/hmac"
 	"crypto/sha1"
 	"encoding/base64"
+	"net/url"
+	"strings"
 )
 
 const (
@@ -20,6 +21,7 @@ const (
 )
 
 type Credential interface {
+
 	Signature(method string, headers map[string]string, resource string) (signature string, err error)
 	SetSecretKey(accessKeySecret string)
 	GetAccessKeyId() string
@@ -91,6 +93,32 @@ func (p *AliOsCredential) Signature(items map[string]interface{}) (signature str
 	signResult := base64.StdEncoding.EncodeToString(hash.Sum(nil))
 
 	return signResult, nil
+}
+
+func (p *AliOsCredential)filter(params map[string]interface{}) map[string]interface{} {
+	newParams := map[string]interface{}{}
+
+	if params != nil && len(params) > 0 {
+		for k, v := range params {
+			if k == "Signature" || v == "" || v == nil {
+				continue
+			} else {
+				newParams[k] = v
+			}
+		}
+		util := util.Util{}
+		return util.KSort(newParams)
+	} else {
+		return newParams
+	}
+}
+
+func (p *AliOsCredential) buildQuery(params map[string]interface{}) string {
+	values := url.Values{}
+	for k, v := range params {
+		values.Add(k, v.(string))
+	}
+	return strings.ReplaceAll(values.Encode(), "+", "%20")
 }
 
 func (p *AliOsCredential) SetSecretKey(accessKeySecret string) {
