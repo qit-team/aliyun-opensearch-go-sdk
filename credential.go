@@ -21,7 +21,8 @@ const (
 )
 
 type Credential interface {
-	Signature(items map[string]interface{}) (signature string, err error)
+
+	Signature(method string, headers map[string]string, resource string) (signature string, err error)
 	SetSecretKey(accessKeySecret string)
 	GetAccessKeyId() string
 	GetAccessKeySecret() string
@@ -37,11 +38,11 @@ type AliOsCredential struct {
 func NewAliOsCredential(accessKeyId, accessKeySecret, securityToken string) *AliOsCredential {
 
 	if accessKeyId == "" || len(accessKeyId) == 0 {
-		panic(PanicInfoPrefix + "access key id is empty")
+		panic("panic" + "access key id is empty")
 	}
 
 	if accessKeySecret == "" || len(accessKeySecret) == 0 {
-		panic(PanicInfoPrefix + "access key secret is empty")
+		panic("panic" + "access key secret is empty")
 	}
 
 	aliOsCredential := new(AliOsCredential)
@@ -52,6 +53,7 @@ func NewAliOsCredential(accessKeyId, accessKeySecret, securityToken string) *Ali
 }
 
 // todo supply Signature algorithm
+//func (p *AliOsCredential) Signature(method Method, headers map[string]string, resource string) (signature string, err error) {
 func (p *AliOsCredential) Signature(items map[string]interface{}) (signature string, err error) {
 	params := map[string]interface{}{}
 	if _, ok := items["query_params"]; ok {
@@ -133,4 +135,31 @@ func (p *AliOsCredential) GetAccessKeySecret() string {
 
 func (p *AliOsCredential) GetSecurityToken() string {
 	return p.securityToken
+}
+
+
+func (p *AliOsCredential)filter(params map[string]interface{}) map[string]interface{} {
+	newParams := map[string]interface{}{}
+
+	if params != nil && len(params) > 0 {
+		for k, v := range params {
+			if k == "Signature" || v == "" || v == nil {
+				continue
+			} else {
+				newParams[k] = v
+			}
+		}
+		util := Util{}
+		return util.KSort(newParams)
+	} else {
+		return newParams
+	}
+}
+
+func (p *AliOsCredential) buildQuery(params map[string]interface{}) string {
+	values := url.Values{}
+	for k, v := range params {
+		values.Add(k, v.(string))
+	}
+	return strings.ReplaceAll(values.Encode(), "+", "%20")
 }

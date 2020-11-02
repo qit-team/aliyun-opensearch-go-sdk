@@ -41,6 +41,12 @@ type OpenSearchClient struct {
 	Timeout      int64
 	endPoint     string
 	AppName      string
+}
+type aliOsClient struct {
+	Timeout      int64
+	endPoint     *neturl.URL
+	//credential   Credential
+	credential   AliOsCredential
 	accessKeyId  string
 	client       *fasthttp.Client
 	clientLocker sync.Mutex
@@ -64,7 +70,7 @@ func NewAliOpenSearchClient(endPoint, accessKeyId, accessKeySecret, securityToke
 	credential := NewAliOsCredential(accessKeyId, accessKeySecret, securityToken)
 	client := *new(OpenSearchClient)
 	client.accessKeyId = accessKeyId
-	client.credential = credential
+	client.credential = *credential
 	client.regionId = regionId
 	client.AppName = AppName
 
